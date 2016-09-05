@@ -1,0 +1,15 @@
+{% extends 'article/base.html' %}
+{% block content %}
+    {% for category in category_list %}
+        <a href="#">{{ category.name }}</a>
+    {% endfor %}
+    {% for article in article_list %}
+        <h2><a href="#">{{ article.title }}</a></h2>
+        <p>
+            Time: {{ article.created_time|date:"Y /m /d" }}
+            <a href="#">{{ article.category }}</a>
+        </p>
+        <p>{{ article.abstract }}</p>
+        <a href="#">Read More >>></a>
+    {% endfor %}
+{% endblock %}

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+{% load staticfiles %}
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>F.H.J's Blog</title>
+    <link rel="stylesheet" href="{% static 'lib/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'article/css/base.css' %}">
+    <link rel="icon" href="{% static 'article/img/title.gif' %}">
+</head>
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'article:index' %}">
+            <img src="{% static 'article/img/brand.jpg' %}" id="brand">
+        </a>
+        <ul class="nav navbar-nav">
+            <li class="active"><a href="{% url 'article:index' %}">首页</a></li>
+            <li><a href="#">其他</a> </li>
+        </ul>
+        <form class="navbar-form pull-right">
+            <input class="form-control" type="text" placeholder="Search">
+            <button class="btn btn-success" type="submit">Submit</button>
+        </form>
+    </div>
+</nav>
+<div class="container base">
+    {% block content %}
+    {% endblock %}
+</div>
+</body>
+</html>
