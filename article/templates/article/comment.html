@@ -1,0 +1,16 @@
+<form method="post" action="{% url 'article:comment' article.pk %}">
+    {% csrf_token %}
+    {% for field in form %}
+        <p>
+            {{ field }}
+            {{ field.errors }}
+        </p>
+    {% endfor %}
+    <button type="submit">Submit</button>
+</form>
+{% for comment in comment_list %}
+    <p>{{ comment.user_name }}</p>
+    <p>{{ comment.user_email }}</p>
+    <p>{{ comment.body }}</p>
+    <p>评论时间: {{ comment.created_time }}</p>
+{% endfor %}

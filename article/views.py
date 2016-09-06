@@ -1,6 +1,10 @@
 from django.shortcuts import render
 from django.views.generic import ListView,DetailView
+from django.views.generic.edit import FormView
+from django.http import HttpResponseRedirect
+from django.shortcuts import render,get_object_or_404
 from .models import Article,Category,Tag
+from .forms import CommentForm
 
 # Create your views here.
 class IndexView(ListView):
@@ -26,6 +30,11 @@ class ArticleDetailView(DetailView):
     def get_object(self, queryset=None):
         article=super(ArticleDetailView,self).get_object()
         return article
+
+    def get_context_data(self, **kwargs):
+        kwargs['comment_list']=self.object.comment_set.all()
+        kwargs['form']=CommentForm()
+        return super(ArticleDetailView,self).get_context_data(**kwargs)
 
 class CategoryView(ListView):
     template_name = 'article/index.html'
@@ -68,3 +77,26 @@ class ArchiveView(ListView):
         kwargs['tag_list']=Tag.objects.all().order_by('name')
         kwargs['date_archive']=Article.objects.archive()
         return super(ArchiveView,self).get_context_data(**kwargs)
+
+class CommentView(FormView):
+    template_name = 'article/detail.html'
+    form_class = CommentForm
+
+    def form_valid(self, form):
+        target_article=get_object_or_404(Article,pk=self.kwargs['article_id'])
+        comment=form.save(commit=False)
+        comment.article=target_article
+        comment.save()
+        success_url=target_article.get_absolute_url()
+        return HttpResponseRedirect(success_url)
+
+    def form_invalid(self, form):
+        target_article=get_object_or_404(Article,pk=self.kwargs['article_id'])
+        return render(self.request,'article/detail.html',{'form':form,'article':target_article,'commnet_list':target_article.comment_set.all()})
+
+    def get_context_data(self, **kwargs):
+        target_article=get_object_or_404(Article,pk=self.kwargs['article_id'])
+        kwargs['article']=target_article
+        kwargs['form']=CommentForm()
+        kwargs['comment_list']=target_article.comment_set.all()
+        return super(CommentView,self).get_context_data(**kwargs)
