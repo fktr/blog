@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.views.generic import ListView,DetailView
-from .models import Article,Category
+from .models import Article,Category,Tag
 
 # Create your views here.
 class IndexView(ListView):
@@ -13,6 +13,7 @@ class IndexView(ListView):
 
     def get_context_data(self, **kwargs):
         kwargs['category_list']=Category.objects.all().order_by('name')
+        kwargs['tag_list']=Tag.objects.all().order_by('name')
         return super(IndexView,self).get_context_data(**kwargs)
 
 class ArticleDetailView(DetailView):
@@ -35,4 +36,19 @@ class CategoryView(ListView):
 
     def get_context_data(self, **kwargs):
         kwargs['category_list']=Category.objects.all().order_by('name')
+        kwargs['tag_list']=Tag.objects.all().order_by('name')
         return super(CategoryView,self).get_context_data(**kwargs)
+
+class TagView(ListView):
+    template_name = 'article/index.html'
+    content_type ='article_list'
+
+    def get_queryset(self):
+        article_list=Article.objects.filter(tag=self.kwargs['tag_id'],status='p')
+        return article_list
+
+    def get_context_data(self, **kwargs):
+        kwargs['tag_list']=Tag.objects.all().order_by('name')
+        kwargs['category_list']=Category.objects.all().order_by('name')
+        return super(TagView,self).get_context_data(**kwargs)
+

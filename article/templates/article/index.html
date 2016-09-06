@@ -1,7 +1,8 @@
 {% extends 'article/base.html' %}
+{% load paginate_tags %}
 {% block content %}
-    {% load paginate_tags %}
-    {% paginate article_list 1 %}
+    <div class="col-md-8">
+    {% paginate article_list 4 %}
     {% for category in category_list %}
         <a href="{% url 'article:category' category.pk %}">{{ category.name }}</a>
     {% endfor %}
@@ -11,8 +12,21 @@
             Time: {{ article.created_time|date:"Y /m /d" }}
             <a href="{% url 'article:category' article.category.pk %}">{{ article.category }}</a>
         </p>
+        <p>
+            {% for tag in article.tag.all %}
+                <a href="{% url 'article:tag' tag.pk %}">{{ tag.name }}</a>
+            {% endfor %}
+        </p>
         <p>{{ article.abstract }}</p>
         <a href="{% url 'article:detail' article.pk %}">Read More >>></a>
     {% endfor %}
     {% include 'article/pagination.html' %}
+    </div>
+    <div class="col-md-4">
+        <ul>
+            {% for tag in tag_list %}
+                <li><a href="{% url 'article:tag' tag.pk %}">{{ tag.name }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
 {% endblock %}
