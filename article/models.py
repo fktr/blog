@@ -1,12 +1,24 @@
 from django.db import models
+import collections
 
 # Create your models here.
+class ArticleManager(models.Manager):
+
+    def archive(self):
+        date_list=Article.objects.datetimes('created_time','day','DESC')
+        date_dict=collections.defaultdict(list)
+
+        for d in date_list:
+            date_dict[d.month].append(d.day)
+        return sorted(date_dict.items(),reverse=True)
+
 class Article(models.Model):
     STATUS_CHOICE=(
         ('d','Draft'),
         ('p','Published'),
     )
 
+    objects=ArticleManager()
     title=models.CharField('标题',max_length=70)
     body=models.TextField('正文')
     created_time=models.DateTimeField('创建时间',auto_now_add=True)

@@ -28,5 +28,13 @@
                 <li><a href="{% url 'article:tag' tag.pk %}">{{ tag.name }}</a></li>
             {% endfor %}
         </ul>
+        <br/><br/>
+        <ul>
+            {% for month,days in date_archive %}
+                {% for day in days %}
+                    <li><span>{{ month }}月</span><a href="{% url 'article:archive' month day %}">{{ day }}日</a></li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
     </div>
 {% endblock %}
