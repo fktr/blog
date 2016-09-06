@@ -1,5 +1,7 @@
 {% extends 'article/base.html' %}
 {% block content %}
+    {% load paginate_tags %}
+    {% paginate article_list 1 %}
     {% for category in category_list %}
         <a href="{% url 'article:category' category.pk %}">{{ category.name }}</a>
     {% endfor %}
@@ -12,4 +14,5 @@
         <p>{{ article.abstract }}</p>
         <a href="{% url 'article:detail' article.pk %}">Read More >>></a>
     {% endfor %}
+    {% include 'article/pagination.html' %}
 {% endblock %}
