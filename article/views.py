@@ -6,8 +6,8 @@ from django.shortcuts import render,get_object_or_404,redirect
 from itertools import  chain
 from django.contrib.syndication.views import Feed
 from django.urls import reverse
-from .models import Article,Category,Tag
-from .forms import CommentForm,RegisterForm
+from .models import Article,Category,Tag,User
+from .forms import CommentForm,RegisterForm,LoginForm
 
 # Create your views here.
 class IndexView(ListView):
@@ -150,15 +150,36 @@ class RSSFeed(Feed):
         return item.last_modified_time
 
 class RegisterView(FormView):
-    template_name = 'article/register.html'
+    template_name = 'article/user.html'
     form_class = RegisterForm
 
     def form_valid(self, form):
         form.save(commit=True)
-        success_url=reverse('article:index')
-        return redirect(success_url)
+        return render(self.request,'article/user_ok.html',{'register':True})
 
     def form_invalid(self, form):
-        return render(self.request,'article/register.html',{'form':form})
+        return render(self.request, 'article/user.html', {'form':form,'register':True})
 
-    
+    def get_context_data(self, **kwargs):
+        kwargs['register']=True
+        return super(RegisterView,self).get_context_data(**kwargs)
+
+class LoginView(FormView):
+    template_name = 'article/user.html'
+    form_class = LoginForm
+
+    def form_valid(self, form):
+        name_user=User.objects.filter(user_name=self.request.POST['user_name'],password=self.request.POST['password'])
+        mail_user=User.objects.filter(user_email=self.request.POST['user_name'],password=self.request.POST['password'])
+        user=set(chain(name_user,mail_user))
+        if user:
+            return render(self.request, 'article/user_ok.html',{'login':True})
+        else:
+            return render(self.request, 'article/user.html', {'form':form,'login':True})
+
+    def form_invalid(self, form):
+        return render(self.request, 'article/user.html', {'form':form,'login':True})
+
+    def get_context_data(self, **kwargs):
+        kwargs['login']=True
+        return super(LoginView,self).get_context_data(**kwargs)

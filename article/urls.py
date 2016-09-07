@@ -11,5 +11,6 @@ urlpatterns=[
     url(r'^search/$',SearchView.as_view(),name='search'),
     url(r'^latest/feed/$',RSSFeed(),name='rss'),
     url(r'^register/$',RegisterView.as_view(),name='register'),
+    url(r'^login/$',LoginView.as_view(),name='login'),
 
 ]

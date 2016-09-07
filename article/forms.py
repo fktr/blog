@@ -39,3 +39,20 @@ class RegisterForm(forms.ModelForm):
                 'placeholder':'请输入你的邮箱',
             }),
         }
+
+class LoginForm(forms.ModelForm):
+
+    class Meta:
+        model=User
+        fields=['user_name','password']
+        widgets={
+            'user_name':forms.TextInput(attrs={
+                'class':'form-control',
+                'placeholder':'请输入你的昵称或邮箱',
+            }),
+            'password':forms.PasswordInput(attrs={
+                'class':'form-control',
+                'placeholder':'请输入你的密码',
+            }),
+        }
+

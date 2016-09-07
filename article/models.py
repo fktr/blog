@@ -24,7 +24,7 @@ class Article(models.Model):
     body=models.TextField('正文')
     created_time=models.DateTimeField('创建时间',auto_now_add=True)
     last_modified_time=models.DateTimeField('修改时间',auto_now=True)
-    status=models.CharField('文章状态',max_length=1,choices=STATUS_CHOICE)
+    status=models.CharField('文章状态',max_length=1,choices=STATUS_CHOICE,default='d')
     abstract=models.CharField('摘要',max_length=54,blank=True,null=True,help_text='可选,若为空则取文章前54个字符')
     views=models.PositiveIntegerField('浏览量',default=0)
     likes=models.PositiveIntegerField('点赞数',default=0)
@@ -68,6 +68,12 @@ class Comment(models.Model):
         return self.body[:20]
 
 class User(models.Model):
+    STATUS=(
+        ('y','已登录'),
+        ('n',"未登录"),
+    )
+
+    user_status=models.CharField('登录状态',max_length=1,choices=STATUS,default='n')
     user_name=models.CharField('昵称',max_length=100)
     password=models.CharField('密码',max_length=100)
     user_email=models.EmailField('邮箱')
