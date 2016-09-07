@@ -5,8 +5,9 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render,get_object_or_404,redirect
 from itertools import  chain
 from django.contrib.syndication.views import Feed
+from django.urls import reverse
 from .models import Article,Category,Tag
-from .forms import CommentForm
+from .forms import CommentForm,RegisterForm
 
 # Create your views here.
 class IndexView(ListView):
@@ -126,8 +127,9 @@ class SearchView(ListView):
         kwargs['category_list']=Category.objects.all().order_by('name')
         kwargs['tag_list']=Tag.objects.all().order_by('name')
         kwargs['date_archive']=Article.objects.archive()
-        kwargs['search']=True
-        kwargs['s']=self.request.GET['s']
+        if 's' in self.request.GET:
+            kwargs['search']=True
+            kwargs['s']=self.request.GET['s']
         return super(SearchView,self).get_context_data(**kwargs)
 
 class RSSFeed(Feed):
@@ -147,3 +149,16 @@ class RSSFeed(Feed):
     def item_pubdate(self,item):
         return item.last_modified_time
 
+class RegisterView(FormView):
+    template_name = 'article/register.html'
+    form_class = RegisterForm
+
+    def form_valid(self, form):
+        form.save(commit=True)
+        success_url=reverse('article:index')
+        return redirect(success_url)
+
+    def form_invalid(self, form):
+        return render(self.request,'article/register.html',{'form':form})
+
+    

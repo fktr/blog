@@ -67,3 +67,10 @@ class Comment(models.Model):
     def __str__(self):
         return self.body[:20]
 
+class User(models.Model):
+    user_name=models.CharField('昵称',max_length=100)
+    password=models.CharField('密码',max_length=100)
+    user_email=models.EmailField('邮箱')
+
+    def __str__(self):
+        return self.user_name

@@ -10,4 +10,6 @@ urlpatterns=[
     url(r'^article/(?P<article_id>\d+)/comment/$',CommentView.as_view(),name='comment'),
     url(r'^search/$',SearchView.as_view(),name='search'),
     url(r'^latest/feed/$',RSSFeed(),name='rss'),
+    url(r'^register/$',RegisterView.as_view(),name='register'),
+
 ]
