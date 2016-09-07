@@ -110,11 +110,11 @@ class SearchView(ListView):
         if 's' in self.request.GET:
             s=self.request.GET['s']
             if s:
-                search_title=Article.objects.filter(title__contains=s)
-                search_category=Article.objects.filter(category__name__contains=s)
-                search_tag=Article.objects.filter(tag__name__contains=s)
-                search_content=Article.objects.filter(body__contains=s)
-                search_comment=Article.objects.filter(comment__body__contains=s)
+                search_title=Article.objects.filter(title__contains=s,status='p')
+                search_category=Article.objects.filter(category__name__contains=s,status='p')
+                search_tag=Article.objects.filter(tag__name__contains=s,status='p')
+                search_content=Article.objects.filter(body__contains=s,status='p')
+                search_comment=Article.objects.filter(comment__body__contains=s,status='p')
                 article_list=list(set(chain(search_title,search_category,search_tag,search_content,search_comment)))
                 return article_list
 
@@ -125,5 +125,7 @@ class SearchView(ListView):
         kwargs['category_list']=Category.objects.all().order_by('name')
         kwargs['tag_list']=Tag.objects.all().order_by('name')
         kwargs['date_archive']=Article.objects.archive()
+        kwargs['search']=True
+        kwargs['s']=self.request.GET['s']
         return super(SearchView,self).get_context_data(**kwargs)
 
