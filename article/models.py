@@ -39,7 +39,7 @@ class Article(models.Model):
         return reverse('article:detail', kwargs={'article_id':self.pk})
 
     class Meta:
-        ordering=['-created_time']
+        ordering=['-last_modified_time']
 
 class Category(models.Model):
     name=models.CharField('类名',max_length=20)

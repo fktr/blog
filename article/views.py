@@ -4,6 +4,7 @@ from django.views.generic.edit import FormView
 from django.http import HttpResponseRedirect
 from django.shortcuts import render,get_object_or_404,redirect
 from itertools import  chain
+from django.contrib.syndication.views import Feed
 from .models import Article,Category,Tag
 from .forms import CommentForm
 
@@ -128,4 +129,21 @@ class SearchView(ListView):
         kwargs['search']=True
         kwargs['s']=self.request.GET['s']
         return super(SearchView,self).get_context_data(**kwargs)
+
+class RSSFeed(Feed):
+    title='blog article'
+    link='/latest/feed/'
+    description='the six latest articles of the blog'
+
+    def items(self):
+        return Article.objects.order_by('-last_modified_time')[:6]
+
+    def item_title(self, item):
+        return item.title
+
+    def item_description(self, item):
+        return item.body
+
+    def item_pubdate(self,item):
+        return item.last_modified_time
 

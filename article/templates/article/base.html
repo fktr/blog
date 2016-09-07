@@ -18,6 +18,7 @@
         </a>
         <ul class="nav navbar-nav">
             <li class="active"><a href="{% url 'article:index' %}">首页</a></li>
+            <li><a href="{% url 'article:rss' %}">RSS</a></li>
             <li><a href="#">其他</a> </li>
         </ul>
         <form class="navbar-form pull-right" method="get" action="{% url 'article:search' %}">

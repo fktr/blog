@@ -2,7 +2,7 @@
 {% load paginate_tags %}
 {% block content %}
     <div class="col-md-8">
-    {% paginate article_list 2 %}
+    {% paginate article_list 3 %}
     {% for category in category_list %}
         <a href="{% url 'article:category' category.pk %}">{{ category.name }}</a>
     {% endfor %}
