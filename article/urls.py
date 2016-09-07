@@ -8,4 +8,5 @@ urlpatterns=[
     url(r'^tag/(?P<tag_id>\d+)/$',TagView.as_view(),name='tag'),
     url(r'^archive/(?P<month>\d+)/(?P<day>\d+)/$',ArchiveView.as_view(),name='archive'),
     url(r'^article/(?P<article_id>\d+)/comment/$',CommentView.as_view(),name='comment'),
+    url(r'^search/$',SearchView.as_view(),name='search'),
 ]

@@ -2,7 +2,8 @@ from django.shortcuts import render
 from django.views.generic import ListView,DetailView
 from django.views.generic.edit import FormView
 from django.http import HttpResponseRedirect
-from django.shortcuts import render,get_object_or_404
+from django.shortcuts import render,get_object_or_404,redirect
+from itertools import  chain
 from .models import Article,Category,Tag
 from .forms import CommentForm
 
@@ -100,3 +101,29 @@ class CommentView(FormView):
         kwargs['form']=CommentForm()
         kwargs['comment_list']=target_article.comment_set.all()
         return super(CommentView,self).get_context_data(**kwargs)
+
+class SearchView(ListView):
+    template_name = 'article/index.html'
+    context_object_name = 'article_list'
+
+    def get_queryset(self):
+        if 's' in self.request.GET:
+            s=self.request.GET['s']
+            if s:
+                search_title=Article.objects.filter(title__contains=s)
+                search_category=Article.objects.filter(category__name__contains=s)
+                search_tag=Article.objects.filter(tag__name__contains=s)
+                search_content=Article.objects.filter(body__contains=s)
+                search_comment=Article.objects.filter(comment__body__contains=s)
+                article_list=list(set(chain(search_title,search_category,search_tag,search_content,search_comment)))
+                return article_list
+
+        article_list=Article.objects.filter(status='p')
+        return article_list
+
+    def get_context_data(self, **kwargs):
+        kwargs['category_list']=Category.objects.all().order_by('name')
+        kwargs['tag_list']=Tag.objects.all().order_by('name')
+        kwargs['date_archive']=Article.objects.archive()
+        return super(SearchView,self).get_context_data(**kwargs)
+
