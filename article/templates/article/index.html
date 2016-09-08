@@ -1,43 +1,24 @@
 {% extends 'article/base.html' %}
+{% load staticfiles %}
 {% load paginate_tags %}
 {% block content %}
-    <div class="col-md-8">
-    {% paginate article_list 3 %}
-    {% for category in category_list %}
-        <a href="{% url 'article:category' category.pk %}">{{ category.name }}</a>
-    {% endfor %}
-    {% for article in article_list %}
+{% paginate article_list 4 %}
+{% for article in obj_list %}
+    <div class="index_article">
         <h2><a href="{% url 'article:detail' article.pk  %}">{{ article.title }}</a></h2>
         <p>
-            Time: {{ article.created_time|date:"Y /m /d" }}
-            <a href="{% url 'article:category' article.category.pk %}">{{ article.category }}</a>
+            发表时间: {{ article.created_time|date:"Y /m /d" }}
+            所属分类: <a class='btn btn-danger btn-xs' href="{% url 'article:category' article.category.pk %}">{{ article.category }}</a>
         </p>
         <p>
+        标签集合:
             {% for tag in article.tag.all %}
-                <a href="{% url 'article:tag' tag.pk %}">{{ tag.name }}</a>
+                <a class="btn btn-info btn-xs" href="{% url 'article:tag' tag.pk %}">{{ tag.name }}</a>
             {% endfor %}
         </p>
         <p>{{ article.abstract }}</p>
-        <a href="{% url 'article:detail' article.pk %}">Read More >>></a>
-    {% endfor %}
-    {% include 'article/pagination.html' %}
+        <a class="btn btn-primary btn-sm" href="{% url 'article:detail' article.pk %}">Read More </a>
     </div>
-    <div class="col-md-4">
-        <ul>
-            {% for tag in tag_list %}
-                <li><a href="{% url 'article:tag' tag.pk %}">{{ tag.name }}</a></li>
-            {% endfor %}
-        </ul>
-        <br/><br/>
-        <ul>
-            {% for month,days in date_archive %}
-                {% for day in days %}
-                    <li><span>{{ month }}月</span><a href="{% url 'article:archive' month day %}">{{ day }}日</a></li>
-                {% endfor %}
-            {% endfor %}
-        </ul>
-        <br/><br/>
-        <p><a href="{% url 'article:register' %}">注册</a> </p>
-        <p><a href="{% url 'article:login' %}">登陆</a></p>
-    </div>
+{% endfor %}
+{% include 'article/pagination.html' %}
 {% endblock %}

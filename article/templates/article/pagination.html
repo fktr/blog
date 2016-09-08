@@ -1,53 +1,55 @@
-<br/>
-<br/>
-{% if article_list.has_previous %}
-    {% if search == True %}
-        <a href="?s={{ s }}&page={{ article_list.previous_page_number }}">上一页</a>
-        {% else %}
-        <a href="?page={{ article_list.previous_page_number }}">上一页</a>
-    {% endif %}
-{% endif %}
-{% if first_page == current_page %}
-    <span>1</span>
-    {% else %}
-    {% if search == True %}
-        <a href="?s={{ s }}&page=1">1</a>
-    {% else %}
-        <a href="?page=1">1</a>
-    {% endif %}
-{% endif %}
-{% if pages_first > 2 %}
-    <span>...</span>
-{% endif %}
-{% for page in pages %}
-    {% if page == current_page %}
-        <span>{{ page }}</span>
-        {% else %}
-        {% if search == True %}
-            <a href="?s={{ s }}&page={{ page }}">{{ page }}</a>
-        {% else %}
-            <a href="?page={{ page }}">{{ page }}</a>
+<nav>
+    <ul class="pager">
+        {% if obj_list.has_previous %}
+            {% if search == True %}
+                <li class="last_page"><a href="?s={{ s }}&page={{ obj_list.previous_page_number }}">上一页</a></li>
+                {% else %}
+                <li class="last_page"><a href="?page={{ obj_list.previous_page_number }}">上一页</a></li>
+            {% endif %}
         {% endif %}
-    {% endif %}
-{% endfor %}
-{% if pages_last < last_page %}
-    <span>...</span>
-{% endif %}
-{% if last_page != 1 %}
-    {% if last_page == current_page %}
-        <span>{{ last_page }}</span>
-        {% else %}
-        {% if search == True %}
-            <a href="?s={{ s }}&page={{ last_page }}">{{ last_page }}</a>
-        {% else %}
-            <a href="?page={{ last_page }}">{{ last_page }}</a>
+        {% if first_page == current_page %}
+            <span class="current">1</span>
+            {% else %}
+            {% if search == True %}
+                <li><a href="?s={{ s }}&page=1">1</a></li>
+            {% else %}
+                <li><a href="?page=1">1</a></li>
+            {% endif %}
         {% endif %}
-    {% endif %}
-{% endif %}
-{% if article_list.has_next %}
-    {% if search == True %}
-        <a href="?s={{ s }}&page={{ article_list.next_page_number }}">下一页</a>
-    {% else %}
-        <a href="?page={{ article_list.next_page_number }}">下一页</a>
-    {% endif %}
-{% endif %}
+        {% if pages_first > 2 %}
+            <span class="current">...</span>
+        {% endif %}
+        {% for page in pages %}
+            {% if page == current_page %}
+                <span class="current">{{ page }}</span>
+                {% else %}
+                {% if search == True %}
+                    <li><a href="?s={{ s }}&page={{ page }}">{{ page }}</a></li>
+                {% else %}
+                    <li><a href="?page={{ page }}">{{ page }}</a></li>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        {% if pages_last < last_page %}
+            <span class="current">...</span>
+        {% endif %}
+        {% if last_page != 1 %}
+            {% if last_page == current_page %}
+                <span class="current">{{ last_page }}</span>
+                {% else %}
+                {% if search == True %}
+                    <li><a href="?s={{ s }}&page={{ last_page }}">{{ last_page }}</a></li>
+                {% else %}
+                    <li><a href="?page={{ last_page }}">{{ last_page }}</a></li>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+        {% if obj_list.has_next %}
+            {% if search == True %}
+                <li class="next_page"><a href="?s={{ s }}&page={{ obj_list.next_page_number }}">下一页</a></li>
+            {% else %}
+                <li class="next_page"><a href="?page={{ obj_list.next_page_number }}">下一页</a></li>
+            {% endif %}
+        {% endif %}
+    </ul>
+</nav>

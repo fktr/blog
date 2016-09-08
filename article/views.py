@@ -37,6 +37,9 @@ class ArticleDetailView(DetailView):
     def get_context_data(self, **kwargs):
         kwargs['comment_list']=self.object.comment_set.all()
         kwargs['form']=CommentForm()
+        kwargs['category_list']=Category.objects.all().order_by('name')
+        kwargs['tag_list']=Tag.objects.all().order_by('name')
+        kwargs['date_archive']=Article.objects.archive()
         return super(ArticleDetailView,self).get_context_data(**kwargs)
 
 class CategoryView(ListView):
@@ -102,6 +105,9 @@ class CommentView(FormView):
         kwargs['article']=target_article
         kwargs['form']=CommentForm()
         kwargs['comment_list']=target_article.comment_set.all()
+        kwargs['category_list']=Category.objects.all().order_by('name')
+        kwargs['tag_list']=Tag.objects.all().order_by('name')
+        kwargs['date_archive']=Article.objects.archive()
         return super(CommentView,self).get_context_data(**kwargs)
 
 class SearchView(ListView):
@@ -162,6 +168,9 @@ class RegisterView(FormView):
 
     def get_context_data(self, **kwargs):
         kwargs['register']=True
+        kwargs['category_list']=Category.objects.all().order_by('name')
+        kwargs['tag_list']=Tag.objects.all().order_by('name')
+        kwargs['date_archive']=Article.objects.archive()
         return super(RegisterView,self).get_context_data(**kwargs)
 
 class LoginView(FormView):
@@ -182,4 +191,10 @@ class LoginView(FormView):
 
     def get_context_data(self, **kwargs):
         kwargs['login']=True
+        kwargs['category_list']=Category.objects.all().order_by('name')
+        kwargs['tag_list']=Tag.objects.all().order_by('name')
+        kwargs['date_archive']=Article.objects.archive()
         return super(LoginView,self).get_context_data(**kwargs)
+
+def test(request):
+    return render(request,'article/test.html')

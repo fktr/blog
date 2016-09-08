@@ -2,13 +2,13 @@
 {% block content %}
     <h1>{{ article.title }}</h1>
     <p>
-        首次创建于{{ article.created_time|date:"Y /m /d" }},最新修改时间{{ article.last_modified_time|date:"Y /m /d" }}
-        属于<a href="{% url 'article:category' article.category.pk %}">{{ article.category }}</a>类
+        发表时间: {{ article.created_time|date:"Y /m /d" }} 修改时间{{ article.last_modified_time|date:"Y /m /d" }}
+        所属分类: <a class="btn btn-danger btn-xs" href="{% url 'article:category' article.category.pk %}">{{ article.category }}</a>
     </p>
     <p>
-        标签集合
+        标签集合:
         {% for tag in article.tag.all %}
-            <a href="{% url 'article:tag' tag.pk %}">{{ tag.name }}</a>
+            <a class="btn btn-info btn-xs" href="{% url 'article:tag' tag.pk %}">{{ tag.name }}</a>
         {% endfor %}
     </p>
     <p>{{ article.body }}</p>

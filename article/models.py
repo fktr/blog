@@ -29,7 +29,7 @@ class Article(models.Model):
     views=models.PositiveIntegerField('浏览量',default=0)
     likes=models.PositiveIntegerField('点赞数',default=0)
     topped=models.BooleanField('置顶',default=False)
-    category=models.ForeignKey('Category',verbose_name='类名',null=True,on_delete=models.SET_NULL)
+    category=models.ForeignKey('Category',verbose_name='类名',null=True,on_delete=models.CASCADE)
     tag=models.ManyToManyField('Tag',verbose_name='标签集合',blank=True)
 
     def __str__(self):
@@ -58,14 +58,16 @@ class Tag(models.Model):
         return self.name
 
 class Comment(models.Model):
-    user_name=models.CharField('评论者名字',max_length=100)
-    user_email=models.CharField('评论者邮箱',max_length=255)
+    user=models.ForeignKey('User',verbose_name='用户昵称',null=True,on_delete=models.CASCADE)
     body=models.TextField('评论内容')
     created_time=models.DateTimeField('评论发表时间',auto_now_add=True)
-    article=models.ForeignKey('Article',verbose_name='评论所属文章',on_delete=models.CASCADE)
+    article=models.ForeignKey('Article',verbose_name='评论所属文章',null=True,on_delete=models.CASCADE)
 
     def __str__(self):
         return self.body[:20]
+
+    class Meta:
+        ordering=['-created_time']
 
 class User(models.Model):
     STATUS=(

@@ -23,7 +23,7 @@ def paginate(context,obj_list,page_count):
         context['current_page']=paginator.num_pages
         pages=get_left(context['current_page'],left,paginator.num_pages)
 
-    context['article_list']=obj_list
+    context['obj_list']=obj_list
     context['pages']=pages
     context['first_page']=1
     context['last_page']=paginator.num_pages

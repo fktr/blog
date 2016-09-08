@@ -7,9 +7,11 @@
     {% endfor %}
     <button type="submit">Submit</button>
 </form>
-{% for comment in comment_list %}
-    <p>{{ comment.user_name }}</p>
-    <p>{{ comment.user_email }}</p>
-    <p>{{ comment.body }}</p>
-    <p>评论时间: {{ comment.created_time }}</p>
-{% endfor %}
+{% load paginate_tags %}
+{% paginate comment_list 4 %}
+    {% for comment in obj_list %}
+        <p>{{ comment.user.user_name }}</p>
+        <p>{{ comment.body }}</p>
+        <p>评论发表时间: {{ comment.created_time }}</p>
+    {% endfor %}
+{% include 'article/pagination.html' %}
