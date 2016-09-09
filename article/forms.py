@@ -20,7 +20,7 @@ class RegisterForm(forms.ModelForm):
         widgets={
             'user_name':forms.TextInput(attrs={
                 'class':'form-control',
-                'placeholder':'请输入你的用户名称',
+                'placeholder':'请输入你的用户昵称',
             }),
             'password':forms.PasswordInput(attrs={
                 'class':'form-control',
@@ -28,7 +28,7 @@ class RegisterForm(forms.ModelForm):
             }),
             'user_email':forms.EmailInput(attrs={
                 'class':'form-control',
-                'placeholder':'请输入你的邮箱',
+                'placeholder':'请输入你的验证邮箱',
             }),
         }
 

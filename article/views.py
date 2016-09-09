@@ -3,9 +3,10 @@ from django.views.generic import ListView,DetailView
 from django.views.generic.edit import FormView
 from django.http import HttpResponseRedirect
 from django.shortcuts import render,get_object_or_404,redirect
-from itertools import  chain
 from django.contrib.syndication.views import Feed
 from django.urls import reverse
+from django.contrib.auth.hashers import make_password,check_password
+from django.db.models import Q
 from .models import Article,Category,Tag,User
 from .forms import CommentForm,RegisterForm,LoginForm
 
@@ -118,12 +119,9 @@ class SearchView(ListView):
         if 's' in self.request.GET:
             s=self.request.GET['s']
             if s:
-                search_title=Article.objects.filter(title__contains=s,status='p')
-                search_category=Article.objects.filter(category__name__contains=s,status='p')
-                search_tag=Article.objects.filter(tag__name__contains=s,status='p')
-                search_content=Article.objects.filter(body__contains=s,status='p')
-                search_comment=Article.objects.filter(comment__body__contains=s,status='p')
-                article_list=list(set(chain(search_title,search_category,search_tag,search_content,search_comment)))
+                article_list=Article.objects.filter(Q(title__contains=s)|Q(category__name__contains=s)|Q(tag__name__contains=s)
+                |Q(body__contains=s)|Q(comment__body__contains=s),Q(status='p'))
+                article_list=list(set(article_list))
                 return article_list
 
         article_list=Article.objects.filter(status='p')
@@ -160,7 +158,9 @@ class RegisterView(FormView):
     form_class = RegisterForm
 
     def form_valid(self, form):
-        form.save(commit=True)
+        user=form.save(commit=False)
+        user.password=make_password(user.password)
+        user.save()
         return render(self.request,'article/user_ok.html',{'register':True})
 
     def form_invalid(self, form):
@@ -178,10 +178,9 @@ class LoginView(FormView):
     form_class = LoginForm
 
     def form_valid(self, form):
-        name_user=User.objects.filter(user_name=self.request.POST['user_name'],password=self.request.POST['password'])
-        mail_user=User.objects.filter(user_email=self.request.POST['user_name'],password=self.request.POST['password'])
-        user=set(chain(name_user,mail_user))
-        if user:
+        user=User.objects.filter(Q(user_name=self.request.POST['user_name'])|Q(user_email=self.request.POST['user_name']))
+        if user and check_password(self.request.POST['password'],user[0].password):
+            user.update(user_status='y')
             return render(self.request, 'article/user_ok.html',{'login':True})
         else:
             return render(self.request, 'article/user.html', {'form':form,'login':True})
