@@ -1,17 +1,15 @@
 <form method="post" action="{% url 'article:comment' article.pk %}">
     {% csrf_token %}
     {% for field in form %}
-        <p>
-            {{ field }}
-        </p>
+        <p>{{ field }}</p>
     {% endfor %}
-    <button class='btn btn-primary btn-default' type="submit">Submit</button>
+    <button class='btn btn-primary btn-default' type="submit">发表</button>
 </form>
 {% load paginate_tags %}
 {% paginate comment_list 4 %}
     {% for comment in obj_list %}
-        <p>{{ comment.user.user_name }}</p>
+        <br/>
+        <p>评论者: {{ comment.user.display_name }} 发表时间：{{ comment.created_time }}</p>
         <p>{{ comment.body }}</p>
-        <p>评论发表时间: {{ comment.created_time }}</p>
     {% endfor %}
 {% include 'article/pagination.html' %}

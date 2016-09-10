@@ -1,5 +1,8 @@
 from django.db import models
 from django.urls import reverse
+from django.db.models.signals import post_save
+from django.contrib.auth.models import User
+from django.dispatch import receiver
 import collections
 
 # Create your models here.
@@ -58,7 +61,7 @@ class Tag(models.Model):
         return self.name
 
 class Comment(models.Model):
-    user=models.ForeignKey('User',verbose_name='用户昵称',null=True,on_delete=models.CASCADE)
+    user=models.ForeignKey('Account',verbose_name='用户',null=True,on_delete=models.CASCADE)
     body=models.TextField('评论内容')
     created_time=models.DateTimeField('评论发表时间',auto_now_add=True)
     article=models.ForeignKey('Article',verbose_name='评论所属文章',null=True,on_delete=models.CASCADE)
@@ -69,16 +72,14 @@ class Comment(models.Model):
     class Meta:
         ordering=['-created_time']
 
-class User(models.Model):
-    STATUS=(
-        ('y','已登录'),
-        ('n',"未登录"),
-    )
+class Account(models.Model):
+    user=models.OneToOneField(User,verbose_name='用户')
+    display_name=models.CharField('昵称',max_length=128)
 
-    user_status=models.CharField('登录状态',max_length=1,choices=STATUS,default='n')
-    user_name=models.CharField('昵称',max_length=100)
-    password=models.CharField('密码',max_length=100)
-    user_email=models.EmailField('邮箱')
+    @receiver(post_save,sender=User)
+    def create_user_account(sender,instance=None,created=False,**kwargs):
+        if created:
+            Account.objects.get_or_create(user=instance,defaults={'display_name':instance.username})
 
     def __str__(self):
-        return self.user_name
+        return self.display_name

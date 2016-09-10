@@ -1,13 +1,12 @@
-from django.shortcuts import render
-from django.views.generic import ListView,DetailView
-from django.views.generic.edit import FormView
-from django.http import HttpResponseRedirect
+from django.views.generic import ListView,DetailView,View
 from django.shortcuts import render,get_object_or_404,redirect
 from django.contrib.syndication.views import Feed
 from django.urls import reverse
-from django.contrib.auth.hashers import make_password,check_password
 from django.db.models import Q
-from .models import Article,Category,Tag,User
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate,login,logout
+from django.contrib import messages
+from .models import Article,Category,Tag,Comment,Account
 from .forms import CommentForm,RegisterForm,LoginForm
 
 # Create your views here.
@@ -76,7 +75,8 @@ class ArchiveView(ListView):
     context_object_name = 'article_list'
 
     def get_queryset(self):
-        article_list=Article.objects.filter(created_time__month=self.kwargs['month'],created_time__day=self.kwargs['day'],status='p')
+        article_list=Article.objects.filter(created_time__month=self.kwargs['month'],
+                                            created_time__day=self.kwargs['day'],status='p')
         return article_list
 
     def get_context_data(self, **kwargs):
@@ -85,31 +85,39 @@ class ArchiveView(ListView):
         kwargs['date_archive']=Article.objects.archive()
         return super(ArchiveView,self).get_context_data(**kwargs)
 
-class CommentView(FormView):
-    template_name = 'article/detail.html'
-    form_class = CommentForm
+class CommentView(View):
 
-    def form_valid(self, form):
-        target_article=get_object_or_404(Article,pk=self.kwargs['article_id'])
-        comment=form.save(commit=False)
-        comment.article=target_article
-        comment.save()
-        success_url=target_article.get_absolute_url()
-        return HttpResponseRedirect(success_url)
+    def get(self,request,article_id,form=None):
+        if not form:
+            form=CommentForm(request.GET)
+        article=get_object_or_404(Article,pk=article_id)
+        comment_list=article.comment_set.all()
+        category_list=Category.objects.all().order_by('name')
+        tag_list=Tag.objects.all().order_by('name')
+        date_archive=Article.objects.archive()
+        data={'article':article,'form':form,'comment_list':comment_list,'category_list':category_list,
+              'tag_list':tag_list,'date_archive':date_archive}
+        return render(request,'article/detail.html',data)
 
-    def form_invalid(self, form):
-        target_article=get_object_or_404(Article,pk=self.kwargs['article_id'])
-        return render(self.request,'article/detail.html',{'form':form,'article':target_article,'commnet_list':target_article.comment_set.all()})
-
-    def get_context_data(self, **kwargs):
-        target_article=get_object_or_404(Article,pk=self.kwargs['article_id'])
-        kwargs['article']=target_article
-        kwargs['form']=CommentForm()
-        kwargs['comment_list']=target_article.comment_set.all()
-        kwargs['category_list']=Category.objects.all().order_by('name')
-        kwargs['tag_list']=Tag.objects.all().order_by('name')
-        kwargs['date_archive']=Article.objects.archive()
-        return super(CommentView,self).get_context_data(**kwargs)
+    def post(self,request,article_id):
+        form=CommentForm(request.POST)
+        if form.is_valid():
+            if request.user.is_authenticated():
+                article=get_object_or_404(Article,pk=article_id)
+                body=form.cleaned_data['body']
+                user=Account.objects.get(user=request.user)
+                comment=Comment.objects.create(body=body,article=article,user=user)
+                comment.save()
+                msg='评论成功'
+                messages.add_message(request,messages.SUCCESS,msg)
+                url=article.get_absolute_url()
+                return redirect(url)
+            else:
+                msg='登录之后才能发言哦'
+                messages.add_message(request,messages.WARNING,msg)
+                return self.get(request,article_id,form)
+        else:
+            return self.get(request,article_id,form)
 
 class SearchView(ListView):
     template_name = 'article/index.html'
@@ -119,11 +127,10 @@ class SearchView(ListView):
         if 's' in self.request.GET:
             s=self.request.GET['s']
             if s:
-                article_list=Article.objects.filter(Q(title__contains=s)|Q(category__name__contains=s)|Q(tag__name__contains=s)
-                |Q(body__contains=s)|Q(comment__body__contains=s),Q(status='p'))
+                article_list=Article.objects.filter(Q(title__contains=s)|Q(category__name__contains=s)
+                |Q(tag__name__contains=s)|Q(body__contains=s)|Q(comment__body__contains=s),Q(status='p'))
                 article_list=list(set(article_list))
                 return article_list
-
         article_list=Article.objects.filter(status='p')
         return article_list
 
@@ -153,47 +160,68 @@ class RSSFeed(Feed):
     def item_pubdate(self,item):
         return item.last_modified_time
 
-class RegisterView(FormView):
-    template_name = 'article/user.html'
-    form_class = RegisterForm
+class RegisterView(View):
 
-    def form_valid(self, form):
-        user=form.save(commit=False)
-        user.password=make_password(user.password)
-        user.save()
-        return render(self.request,'article/user_ok.html',{'register':True})
+    def get(self,request,form=None):
+        if not form:
+            form=RegisterForm(request.GET)
+        data={'form':form,'btn_name':'注册'}
+        return render(request,'article/simple_form.html',data)
 
-    def form_invalid(self, form):
-        return render(self.request, 'article/user.html', {'form':form,'register':True})
-
-    def get_context_data(self, **kwargs):
-        kwargs['register']=True
-        kwargs['category_list']=Category.objects.all().order_by('name')
-        kwargs['tag_list']=Tag.objects.all().order_by('name')
-        kwargs['date_archive']=Article.objects.archive()
-        return super(RegisterView,self).get_context_data(**kwargs)
-
-class LoginView(FormView):
-    template_name = 'article/user.html'
-    form_class = LoginForm
-
-    def form_valid(self, form):
-        user=User.objects.filter(Q(user_name=self.request.POST['user_name'])|Q(user_email=self.request.POST['user_name']))
-        if user and check_password(self.request.POST['password'],user[0].password):
-            user.update(user_status='y')
-            return render(self.request, 'article/user_ok.html',{'login':True})
+    def post(self,request):
+        form=RegisterForm(request.POST)
+        if form.is_valid():
+            username=form.cleaned_data['username']
+            password=form.cleaned_data['password']
+            email=form.cleaned_data['email']
+            user=User.objects.create_user(username,email,password)
+            user.save()
+            msg='注册成功'
+            messages.add_message(request,messages.SUCCESS,msg)
+            url=reverse('article:login')
+            return redirect(url)
         else:
-            return render(self.request, 'article/user.html', {'form':form,'login':True})
+            return self.get(request,form)
 
-    def form_invalid(self, form):
-        return render(self.request, 'article/user.html', {'form':form,'login':True})
+class LoginView(View):
 
-    def get_context_data(self, **kwargs):
-        kwargs['login']=True
-        kwargs['category_list']=Category.objects.all().order_by('name')
-        kwargs['tag_list']=Tag.objects.all().order_by('name')
-        kwargs['date_archive']=Article.objects.archive()
-        return super(LoginView,self).get_context_data(**kwargs)
+    def get(self,request,form=None):
+        if not form:
+            form=LoginForm(request.GET)
+        data={'form':form,'btn_name':'登录'}
+        return render(request,'article/simple_form.html',data)
+
+    def post(self,request):
+        form=LoginForm(request.POST)
+        if form.is_valid():
+            username=form.cleaned_data['username']
+            password=form.cleaned_data['password']
+            user=authenticate(username=username,password=password)
+            if user is not None:
+                if user.is_active:
+                    login(request,user)
+                    url=request.GET.get('next')
+                    if not url:
+                        url=reverse('article:index')
+                    return redirect(url)
+                else:
+                    msg='账户被禁用'
+                    messages.add_message(request,messages.WARNING,msg)
+                    return self.get(request,form)
+            else:
+                msg='登录无效,请重新尝试'
+                messages.add_message(request,messages.ERROR,msg)
+                return self.get(request,form)
+        else:
+            return self.get(request,form)
+
+class LogoutView(View):
+
+    def get(self,request):
+        logout(request)
+        url=reverse('article:login')
+        return redirect(url)
 
 def test(request):
     return render(request,'article/test.html')
+
