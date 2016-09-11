@@ -1,18 +1,12 @@
-<!DOCTYPE html>
+{% extends 'template.html' %}
 {% load staticfiles %}
-<html lang="zh-CN">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="x-ua-compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>F.H.J's Blog</title>
-    <link rel="stylesheet" href="{% static 'lib/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'article/css/style.css' %}">
-    <link rel="icon" href="{% static 'article/img/title.gif' %}">
-    <script src="{% static 'lib/jquery.min.js' %}"></script>
-    <script src="{% static 'lib/js/bootstrap.min.js' %}"></script>
-</head>
-<body>
+{% block title %}
+    F.H.J's Blog
+{% endblock %}
+{% block mycss %}
+    <link rel="stylesheet" href="{% static 'article/css/article.css' %}">
+{% endblock %}
+{% block template %}
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container">
         <a class="navbar-brand" href="{% url 'article:index' %}">
@@ -30,7 +24,27 @@
                 </ul>
             </li>
             <li><a href="{% url 'article:rss' %}">RSS</a></li>
-            <li><a href="#">其他</a> </li>
+            <li class="dropdown active">
+                {% if user %}
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ user }}<span class="caret"></span></a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li class="divider"></li>
+                        <li><a href="{% url 'article:profile' %}">我的资料</a></li>
+                        <li class="divider"></li>
+                        <li><a href="{% url 'article:change_password' %}">修改密码</a></li>
+                        <li class="divider"></li>
+                        <li><a href="{% url 'article:logout' %}">登出</a></li>
+                    </ul>
+                {% else %}
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">登录/注册<span class="caret"></span></a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li class="divider"></li>
+                        <li><a href="{% url 'article:login' %}">登录</a></li>
+                        <li class="divider"></li>
+                        <li><a href="{% url 'article:register' %}">注册</a></li>
+                    </ul>
+                {% endif %}
+            </li>
         </ul>
         <form class="navbar-form pull-right" method="get" action="{% url 'article:search' %}">
             <input class="form-control" type="text" name='s' placeholder="Search">
@@ -44,11 +58,6 @@
         {% endblock %}
     </div>
     <div class="col-md-3">
-        <div id="user">
-            <a class="btn btn-success btn-md col-md-4 index_user" href="{% url 'article:register' %}">注册</a>
-            <a class="btn btn-success btn-md col-md-4 index_user" href="{% url 'article:login' %}">登录</a>
-        </div>
-        <br/><br/>
         <ul>
             {% for tag in tag_list %}
                 <li class="index_tag"><a class="btn btn-info btn-sm col-md-9" href="{% url 'article:tag' tag.pk %}">{{ tag.name }}</a></li>
@@ -63,5 +72,4 @@
         </ul>
     </div>
 </div>
-</body>
-</html>
+{% endblock %}

@@ -6,8 +6,13 @@ from django.db.models import Q
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate,login,logout
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.core.mail import send_mail
+from django.conf import settings
 from .models import Article,Category,Tag,Comment,Account
-from .forms import CommentForm,RegisterForm,LoginForm
+from .signatures import token_confirm
+from .forms import CommentForm,RegisterForm,LoginForm,ChangePasswordForm,ProfileForm
 
 # Create your views here.
 class IndexView(ListView):
@@ -22,6 +27,10 @@ class IndexView(ListView):
         kwargs['category_list']=Category.objects.all().order_by('name')
         kwargs['tag_list']=Tag.objects.all().order_by('name')
         kwargs['date_archive']=Article.objects.archive()
+        if self.request.user.is_anonymous():
+            kwargs['user']=False
+        else:
+            kwargs['user']=self.request.user.account.display_name
         return super(IndexView,self).get_context_data(**kwargs)
 
 class ArticleDetailView(DetailView):
@@ -40,6 +49,10 @@ class ArticleDetailView(DetailView):
         kwargs['category_list']=Category.objects.all().order_by('name')
         kwargs['tag_list']=Tag.objects.all().order_by('name')
         kwargs['date_archive']=Article.objects.archive()
+        if self.request.user.is_anonymous():
+            kwargs['user']=False
+        else:
+            kwargs['user']=self.request.user.account.display_name
         return super(ArticleDetailView,self).get_context_data(**kwargs)
 
 class CategoryView(ListView):
@@ -54,6 +67,10 @@ class CategoryView(ListView):
         kwargs['category_list']=Category.objects.all().order_by('name')
         kwargs['tag_list']=Tag.objects.all().order_by('name')
         kwargs['date_archive']=Article.objects.archive()
+        if self.request.user.is_anonymous():
+            kwargs['user']=False
+        else:
+            kwargs['user']=self.request.user.account.display_name
         return super(CategoryView,self).get_context_data(**kwargs)
 
 class TagView(ListView):
@@ -68,6 +85,10 @@ class TagView(ListView):
         kwargs['tag_list']=Tag.objects.all().order_by('name')
         kwargs['category_list']=Category.objects.all().order_by('name')
         kwargs['date_archive']=Article.objects.archive()
+        if self.request.user.is_anonymous():
+            kwargs['user']=False
+        else:
+            kwargs['user']=self.request.user.account.display_name
         return super(TagView,self).get_context_data(**kwargs)
 
 class ArchiveView(ListView):
@@ -83,6 +104,10 @@ class ArchiveView(ListView):
         kwargs['category_list']=Category.objects.all().order_by('name')
         kwargs['tag_list']=Tag.objects.all().order_by('name')
         kwargs['date_archive']=Article.objects.archive()
+        if self.request.user.is_anonymous():
+            kwargs['user']=False
+        else:
+            kwargs['user']=self.request.user.account.display_name
         return super(ArchiveView,self).get_context_data(**kwargs)
 
 class CommentView(View):
@@ -97,25 +122,29 @@ class CommentView(View):
         date_archive=Article.objects.archive()
         data={'article':article,'form':form,'comment_list':comment_list,'category_list':category_list,
               'tag_list':tag_list,'date_archive':date_archive}
+        if self.request.user.is_anonymous():
+            data['user']=False
+        else:
+            data['user']=self.request.user.account.display_name
         return render(request,'article/detail.html',data)
 
     def post(self,request,article_id):
         form=CommentForm(request.POST)
+        article = get_object_or_404(Article, pk=article_id)
+        url = article.get_absolute_url()
         if form.is_valid():
             if request.user.is_authenticated():
-                article=get_object_or_404(Article,pk=article_id)
                 body=form.cleaned_data['body']
                 user=Account.objects.get(user=request.user)
                 comment=Comment.objects.create(body=body,article=article,user=user)
                 comment.save()
                 msg='评论成功'
-                messages.add_message(request,messages.SUCCESS,msg)
-                url=article.get_absolute_url()
-                return redirect(url)
+                data={'message':msg,'url':url}
+                return render(request,'message.html',data)
             else:
                 msg='登录之后才能发言哦'
-                messages.add_message(request,messages.WARNING,msg)
-                return self.get(request,article_id,form)
+                data={'message':msg,'url':url}
+                return render(request,'message.html',data)
         else:
             return self.get(request,article_id,form)
 
@@ -141,6 +170,10 @@ class SearchView(ListView):
         if 's' in self.request.GET:
             kwargs['search']=True
             kwargs['s']=self.request.GET['s']
+        if self.request.user.is_anonymous():
+            kwargs['user']=False
+        else:
+            kwargs['user']=self.request.user.account.display_name
         return super(SearchView,self).get_context_data(**kwargs)
 
 class RSSFeed(Feed):
@@ -164,9 +197,9 @@ class RegisterView(View):
 
     def get(self,request,form=None):
         if not form:
-            form=RegisterForm(request.GET)
+            form=RegisterForm()
         data={'form':form,'btn_name':'注册'}
-        return render(request,'article/simple_form.html',data)
+        return render(request, 'accounts/register.html', data)
 
     def post(self,request):
         form=RegisterForm(request.POST)
@@ -175,21 +208,51 @@ class RegisterView(View):
             password=form.cleaned_data['password']
             email=form.cleaned_data['email']
             user=User.objects.create_user(username,email,password)
+            user.is_active=False
             user.save()
-            msg='注册成功'
-            messages.add_message(request,messages.SUCCESS,msg)
-            url=reverse('article:login')
-            return redirect(url)
+            token=token_confirm.generate_validate_token(username)
+            message='欢迎加入我的博客,请访问该链接完成用户验证:%s' % '/'.join([settings.DOMAIN,'activeuser',token])
+            send_mail('注册用户验证信息',message,'1767831392@qq.com',[email],fail_silently=False)
+            msg='请登录到注册邮箱中验证用户,有效期为一个小时'
+            url=reverse('article:index')
+            data={'message':msg,'url':url}
+            return render(request, 'message.html', data)
         else:
             return self.get(request,form)
+
+def active_user(request,token):
+    try:
+        username=token_confirm.confirm_validate_token(token)
+    except:
+        username=token_confirm.remove_validate_token(token)
+        users=User.objects.filter(username=username)
+        for user in users:
+            user.delete()
+        msg='对不起,验证链接已经过期,请重新注册'
+        url=reverse('article:register')
+        data={'message':msg,'url':url}
+        return render(request, 'message.html', data)
+    try:
+        user=User.objects.get(username=username)
+    except User.DoesNotExist:
+        msg='对不起,你所验证的用户不存在,请重新注册'
+        url=reverse('article:register')
+        data={'message':msg,'url':url}
+        return render(request, 'message.html', data)
+    user.is_active=True
+    user.save()
+    msg='验证成功'
+    url=reverse('article:login')
+    data={'message':msg,'url':url}
+    return render(request, 'message.html', data)
 
 class LoginView(View):
 
     def get(self,request,form=None):
         if not form:
-            form=LoginForm(request.GET)
+            form=LoginForm()
         data={'form':form,'btn_name':'登录'}
-        return render(request,'article/simple_form.html',data)
+        return render(request, 'accounts/login.html', data)
 
     def post(self,request):
         form=LoginForm(request.POST)
@@ -200,18 +263,20 @@ class LoginView(View):
             if user is not None:
                 if user.is_active:
                     login(request,user)
-                    url=request.GET.get('next')
-                    if not url:
-                        url=reverse('article:index')
-                    return redirect(url)
+                    msg='登陆成功'
+                    url=reverse('article:index')
+                    data={'message':msg,'url':url}
+                    return render(request,'message.html',data)
                 else:
-                    msg='账户被禁用'
-                    messages.add_message(request,messages.WARNING,msg)
-                    return self.get(request,form)
+                    msg='账户没有激活'
+                    url=reverse('article:index')
+                    data={'message':msg,'url':url}
+                    return render(request,'message.html',data)
             else:
                 msg='登录无效,请重新尝试'
-                messages.add_message(request,messages.ERROR,msg)
-                return self.get(request,form)
+                url=reverse('article:login')
+                data={'message':msg,'url':url}
+                return render(request,'message.html',data)
         else:
             return self.get(request,form)
 
@@ -219,9 +284,68 @@ class LogoutView(View):
 
     def get(self,request):
         logout(request)
-        url=reverse('article:login')
-        return redirect(url)
+        msg='退出登录'
+        url=reverse('article:index')
+        data={'message':msg,'url':url}
+        return render(request,'message.html',data)
+
+class ProfileView(View):
+
+    @method_decorator(login_required)
+    def get(self,request,form=None):
+        form_data={
+            'display_name':request.user.account.display_name,
+            'biography':request.user.account.biography,
+            'homepage':request.user.account.homepage,
+            'weibo':request.user.account.weibo,
+            'github':request.user.account.github
+        }
+        if not form:
+            form=ProfileForm(initial=form_data)
+        data={'form':form,'is_profile':True,'btn_name':'保存'}
+        return render(request,'accounts/settings_profile.html',data)
+
+    @method_decorator(login_required)
+    def post(self,request):
+        form=ProfileForm(request.POST)
+        if form.is_valid():
+            account=request.user.account
+            account.display_name=form.cleaned_data['display_name']
+            account.biography=form.cleaned_data['biography']
+            account.homepage=form.cleaned_data['homepage']
+            account.weibo=form.cleaned_data['weibo']
+            account.github=form.cleaned_data['github']
+            account.save()
+            msg='成功更新个人资料'
+            url=reverse('article:index')
+            data={'message':msg,'url':url}
+            return render(request,'message.html',data)
+        else:
+            return self.get(request,form)
+
+class ChangePasswordView(View):
+
+    @method_decorator(login_required)
+    def get(self,request,form=None):
+        if not form:
+            form=ChangePasswordForm(initial={'username':request.user.username})
+        data={'form':form,'is_password':True,'btn_name':'保存'}
+        return render(request,'accounts/settings_profile.html',data)
+
+    @method_decorator(login_required)
+    def post(self,request):
+        form=ChangePasswordForm(request.POST)
+        if form.is_valid():
+            password=form.cleaned_data['new_password']
+            user=request.user
+            user.set_password(password)
+            user.save()
+            msg='成功修改密码'
+            url=reverse('article:login')
+            data={'message':msg,'url':url}
+            return render(request,'message.html',data)
+        else:
+            return self.get(request,form)
 
 def test(request):
-    return render(request,'article/test.html')
-
+    return render(request, 'test.html')

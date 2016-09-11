@@ -120,3 +120,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES=os.path.join(BASE_DIR,'/article/static')
+EMAIL_HOST='smtp.qq.com'
+EMAIL_HOST_USER='1767831392@qq.com'
+EMAIL_HOST_PASSWORD='rwdwnedtcntpedij'
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+DOMAIN='localhost:8080'

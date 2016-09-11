@@ -11,7 +11,10 @@ urlpatterns=[
     url(r'^search/$',SearchView.as_view(),name='search'),
     url(r'^latest/feed/$',RSSFeed(),name='rss'),
     url(r'^register/$',RegisterView.as_view(),name='register'),
+    url(r'^activeuser/(?P<token>\w+.[-_\w]*\w+.[-_\w]*\w+)/$',active_user,name='activeuser'),
     url(r'^login/$',LoginView.as_view(),name='login'),
     url(r'^logout/$',LogoutView.as_view(),name='logout'),
+    url(r'^profile/$',ProfileView.as_view(),name='profile'),
+    url(r'^profile/password/$',ChangePasswordView.as_view(),name='change_password'),
     url(r'^test/$',test)
 ]

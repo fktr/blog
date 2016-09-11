@@ -75,6 +75,10 @@ class Comment(models.Model):
 class Account(models.Model):
     user=models.OneToOneField(User,verbose_name='用户')
     display_name=models.CharField('昵称',max_length=128)
+    biography=models.TextField('简介',null=True,blank=True)
+    homepage=models.URLField('主页',null=True,blank=True)
+    weibo=models.URLField('微博',null=True,blank=True)
+    github=models.URLField('GitHub',null=True,blank=True)
 
     @receiver(post_save,sender=User)
     def create_user_account(sender,instance=None,created=False,**kwargs):

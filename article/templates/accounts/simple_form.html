@@ -1,0 +1,13 @@
+<form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+        <p>{{ field.label}}:{{ field }}</p>
+    {% endfor %}
+    <button class='btn btn-primary btn-block' type="submit">
+        {% if btn_name %}
+            {{ btn_name }}
+        {% else %}
+            提交
+        {% endif %}
+    </button>
+</form>
