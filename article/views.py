@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.views.generic import ListView,DetailView,View
 from django.shortcuts import render,get_object_or_404,redirect
 from django.contrib.syndication.views import Feed
@@ -5,11 +6,11 @@ from django.urls import reverse
 from django.db.models import Q
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate,login,logout
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.core.mail import send_mail
 from django.conf import settings
+from weibo import APIClient
 from .models import Article,Category,Tag,Comment,Account
 from .signatures import token_confirm
 from .forms import CommentForm,RegisterForm,LoginForm,ChangePasswordForm,ProfileForm
@@ -280,6 +281,61 @@ class LoginView(View):
         else:
             return self.get(request,form)
 
+key = settings.APP_KEY
+secret = settings.APP_SECRET
+callback = settings.CALLBACK_URL
+
+class SinaLoginView(View):
+
+    def get(self,request):
+        client=APIClient(app_key=key,app_secret=secret,redirect_uri=callback)
+        url=client.get_authorize_url()
+        return redirect(url)
+
+    def post(self,request):
+        form=ProfileForm(request.POST)
+        if form.is_valid():
+            username=form.cleaned_data['display_name']
+            password='defaultpassword'
+            email='defaultemail@qq.com'
+            user=User.objects.create_user(username,email,password)
+            user.save()
+            login(request,user)
+            account=user.account
+            account.sina_id=form.cleaned_data['sina_id']
+            account.display_name=form.cleaned_data['display_name']
+            account.homepage=form.cleaned_data['homepage']
+            account.biography=form.cleaned_data['biography']
+            account.weibo=form.cleaned_data['weibo']
+            account.github=form.cleaned_data['github']
+            account.save()
+            msg='设置成功'
+            url=reverse('article:index')
+            data={'message':msg,'url':url}
+            return render(request,'message.html',data)
+        else:
+            return self.get(request)
+
+def sina_access(request):
+    code=request.GET['code']
+    client=APIClient(app_key=key,app_secret=secret,redirect_uri=callback)
+    r=client.request_access_token(code)
+    sina_id=r.uid
+    access_token=r.access_token
+    expires_in=r.expires_in
+    client.set_access_token(access_token,expires_in)
+    try:
+        user=Account.objects.get(sina_id=sina_id)
+        login(request,user.user)
+        msg='登录成功'
+        url=reverse('article:index')
+        data={'message':msg,'url':url}
+        return render(request,'message.html',data)
+    except:
+        form=ProfileForm(initial={'sina_id':sina_id})
+        data={'form':form,'title':'添加信息','is_sina':True,'btn_name':'保存'}
+        return render(request,'accounts/settings_profile.html',data)
+
 class LogoutView(View):
 
     def get(self,request):
@@ -302,7 +358,7 @@ class ProfileView(View):
         }
         if not form:
             form=ProfileForm(initial=form_data)
-        data={'form':form,'is_profile':True,'btn_name':'保存'}
+        data={'form':form,'title':'修改资料','is_profile':True,'btn_name':'保存'}
         return render(request,'accounts/settings_profile.html',data)
 
     @method_decorator(login_required)
@@ -329,7 +385,7 @@ class ChangePasswordView(View):
     def get(self,request,form=None):
         if not form:
             form=ChangePasswordForm(initial={'username':request.user.username})
-        data={'form':form,'is_password':True,'btn_name':'保存'}
+        data={'form':form,'title':'修改密码','is_password':True,'btn_name':'保存'}
         return render(request,'accounts/settings_profile.html',data)
 
     @method_decorator(login_required)

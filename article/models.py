@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.db import models
 from django.urls import reverse
 from django.db.models.signals import post_save
@@ -78,6 +79,7 @@ class Account(models.Model):
     biography=models.TextField('简介',null=True,blank=True)
     homepage=models.URLField('主页',null=True,blank=True)
     weibo=models.URLField('微博',null=True,blank=True)
+    sina_id=models.CharField('微博ID',max_length=128,null=True,blank=True)
     github=models.URLField('GitHub',null=True,blank=True)
 
     @receiver(post_save,sender=User)

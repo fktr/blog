@@ -125,4 +125,8 @@ EMAIL_HOST_USER='1767831392@qq.com'
 EMAIL_HOST_PASSWORD='rwdwnedtcntpedij'
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
-DOMAIN='localhost:8080'
+DOMAIN='www.kernelpanic.top'
+from weibo import APIClient
+APP_KEY='4292091047'
+APP_SECRET='3045c3fbbbe31aa0e77b10270a553dfd'
+CALLBACK_URL='www.kernelpanic.top/callback/'

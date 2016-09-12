@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from itsdangerous import URLSafeSerializer
 import base64
 from django.conf import settings
@@ -6,7 +7,8 @@ class Token:
 
     def __init__(self,security_key):
         self.security_key=security_key
-        self.salt=base64.encodebytes(bytes(security_key,encoding='utf-8'))
+        self.salt=base64.encodestring(security_key)
+#       self.salt=base64.encodebytes(bytes(security_key,encoding='utf-8'))
 
     def generate_validate_token(self,username):
         serializer=URLSafeSerializer(self.security_key)

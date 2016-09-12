@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django import forms
 from django.contrib.auth import authenticate
 
@@ -59,6 +60,7 @@ class ProfileForm(forms.Form):
         'class':'form-control',
         'placeholder':'example.com'
     }))
+    sina_id=forms.CharField(required=False,label='',max_length=128,widget=forms.HiddenInput)
     github=forms.URLField(required=False,label='GitHub',widget=forms.URLInput(attrs={
         'class':'form-control',
         'placeholder':'github.com/example'
